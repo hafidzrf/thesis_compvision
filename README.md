@@ -3,7 +3,7 @@ This repository contains all supplementary data that were used in the graduate t
 
 "Development of Image Processing Model based on Convolutional Neural Network with Big Data for Building Typology Classification"
 
-by Hafidz Rizky Firmansyah, Bandung Institute of Technology, 2022
+by Hafidz Rizky Firmansyah, Bandung Institute of Technology, IIndonesia, 2022
 
 # Abstract
 Various studies have been carried out to produce a map of the area's vulnerability due to earthquakes. Indonesia, with its high earthquake risk, already has an earthquake risk map based on the type of building for each region. However, this map still assumes the same building types for a large area (about 1000 km2).
