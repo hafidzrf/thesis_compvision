@@ -34,3 +34,5 @@ Testing of this CNN system in Bandung city using data mining shows that of 1538 
 
 Keywords : building vulnerabilities, building typology, Google Street View, data mining, data augmentation, convolutional neural network, domain transfer
 
+### Datasets are available upon request
+Contacts : hafidz.rizky@outlook.com
