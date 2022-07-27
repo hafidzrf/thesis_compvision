@@ -6,4 +6,4 @@
 4. Perform augmentation process *only in training set* to enhance generalization capability of CNN model using **Data Augmentation Generator.ipynb**
 5. Perform Hyperparameter optimization for Adam learning rate and batch size for each dataset, using random search method. **Hyperparameter Optimization.ipynb**
 6. Perform main task : training, validation, and testing for each models, using **Typology Classifier.ipynb**
-7. Evaluation of model performance, tested on other domains with **Domain Transfer.ipynb** , and evaluation of model outputs in recognizing building objects and its detailed features differentiating each typology with **GradCAM Visualization.ipynb**
+7. Evaluation of model performance, tested on other domains with **Domain Transfer.ipynb** , and evaluation of model outputs in recognizing building objects and its detailed features differentiating each typology class with **GradCAM Visualization.ipynb**
