@@ -1,5 +1,5 @@
 # thesis_compvision
-This repository contains all supplementary data that were used in the gradauate thesis:
+This repository contains all supplementary data that were used in the graduate thesis:
 
 "Development of Image Processing Model based on Convolutional Neural Network with Big Data for Building Typology Classification"
 
