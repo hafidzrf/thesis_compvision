@@ -5,6 +5,10 @@ This repository contains all supplementary data that were used in the graduate t
 
 by Hafidz Rizky Firmansyah, Bandung Institute of Technology, Indonesia, 2022
 
+## Datasets
+### Datasets are available upon request
+Contacts : hafidz.rizky@outlook.com
+
 # Abstract
 Various studies have been carried out to produce a map of the area's vulnerability due to earthquakes. Indonesia, with its high earthquake risk, already has an earthquake risk map based on the type of building for each region. However, this map still assumes the same building types for a large area (about 1000 km2).
 
@@ -33,6 +37,3 @@ Evaluation of decision making by CNN model is visualized with GradCAM algorithm,
 Testing of this CNN system in Bandung city using data mining shows that of 1538 sample photos of buildings taken randomly, 58% are confined masonry, 39% are RC infilled masonry, 2% are timber structures, and 1% are unconfined masonry. Manual inspection are carried out in some of the predicted sample photos and demonstrated results as expected. Several things to note are that data mining from GSV are unable to reach remote areas that are inaccessible using a GSV vehicle, thus making images of unconfined masonry buildings and timber structures, which are often found in suburban and rural areas, still difficult to obtain.
 
 Keywords : building vulnerabilities, building typology, Google Street View, data mining, data augmentation, convolutional neural network, domain transfer
-
-### Datasets are available upon request
-Contacts : hafidz.rizky@outlook.com
