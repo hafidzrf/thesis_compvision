@@ -1,4 +1,4 @@
-# thesis_compvision
+# Graduate Thesis - Computer Vision with CNN
 This repository contains all supplementary data that were used in the graduate thesis:
 
 "Development of Image Processing Model based on Convolutional Neural Network with Big Data for Building Typology Classification"
