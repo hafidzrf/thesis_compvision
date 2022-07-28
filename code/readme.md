@@ -1,6 +1,6 @@
 # The general methodology of this study, represented in codes available in this folder are:
 
-1. Design of building-nonbuilding binary classification CNN model to aid the next data mining process with **Building - Non Building GSV Binary Classification.ipynb**
+1. Design of building-nonbuilding binary classification CNN model to aid the subsequent data mining process with **Building - Non Building GSV Binary Classification.ipynb**
 2. Execution of data mining process (specifically, for Random Sampled Dataset) using Google Street View API with **Image_Generator_StreetView API.ipynb**
 3. Dataset compilation (manual and/or automated), and organizing the train-test-split for each dataset using **Dataset Creation.ipynb**
 4. Perform augmentation process *only in training set* to enhance generalization capability of CNN model using **Data Augmentation Generator.ipynb**
