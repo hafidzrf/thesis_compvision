@@ -37,3 +37,20 @@ Evaluation of decision making by CNN model is visualized with GradCAM algorithm,
 Testing of this CNN system in Bandung city using data mining shows that of 1538 sample photos of buildings taken randomly, 58% are confined masonry, 39% are RC infilled masonry, 2% are timber structures, and 1% are unconfined masonry. Manual inspection are carried out in some of the predicted sample photos and demonstrated results as expected. Several things to note are that data mining from GSV are unable to reach remote areas that are inaccessible using a GSV vehicle, thus making images of unconfined masonry buildings and timber structures, which are often found in suburban and rural areas, still difficult to obtain.
 
 Keywords : building vulnerabilities, building typology, Google Street View, data mining, data augmentation, convolutional neural network, domain transfer
+
+# Results
+## Visualization of CNN algorithm for each layer
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/gif%20CNN%201.gif "Original Images : RC Infilled Masonry")
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/gif%20CNN%202.gif "Original Images : Unconfined Masonry")
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/gif%20CNN%203.gif "Original Images : Confined Masonry")
+
+## Building Typology + Data Mining tests in Bandung City
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/Mapping%20Tests.png)
+
+## Bandung Earthquake Vulnerability Maps
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/EQ%20Map%20D0.png "Damage Grade 0")
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/EQ%20Map%20D1.png "Damage Grade 1")
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/EQ%20Map%20D2.png "Damage Grade 2")
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/EQ%20Map%20D3.png "Damage Grade 3")
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/EQ%20Map%20D4.png "Damage Grade 4")
+![alt text](https://github.com/hafidzrf/thesis_compvision/blob/main/gif-images/EQ%20Map%20D5.png "Damage Grade 5")
