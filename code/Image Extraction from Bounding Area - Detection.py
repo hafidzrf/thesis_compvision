@@ -107,10 +107,10 @@ padang_city_poly_rough = Polygon([[-0.9642021332463775, 100.35129330887598],[-0.
                                  ])
 
 # 7. Directory tempat saving gambar dan csv
-loc_name = 'Padang_Kota'
-output_dirs = 'Mapping/Skenario Padang A/'
-folium_map_center_lat = -0.907807699324931
-folium_map_center_lon = 100.37461998026899
+loc_name = 'PREFIX_NAMA GAMBAR HASIL GSV MINING'
+output_dirs = 'OUTPUT DIRECTORY'
+folium_map_center_lat = -0.907807699324931 # Default posisi di tengah Kota Padang
+folium_map_center_lon = 100.37461998026899 # Default posisi di tengah Kota Padang
 
 
 # ### Eksekusi GSV API Mining
@@ -139,9 +139,9 @@ df.to_csv(f'{output_dirs}/{loc_name} 060724.csv', index = False)
 
 
 # Earthquake Scenario (Padang 2009 EQ)
-eq_depth = 90 # in km
+eq_depth = 90 # in km. DEFAULT GEMPA PADANG 30 SEPTEMBER 2009
 eq_mw = 8.1 # magnitude from EQ history in Sumatra subduction zone
-eq_lat, eq_lon = -0.7071, 99.9678
+eq_lat, eq_lon = -0.7071, 99.9678 # DEFAULT KOORDINAT EPISENTRUM GEMPA PADANG 30 SEPTEMBER 2009
 
 
 # In[ ]:
@@ -207,7 +207,7 @@ maps = folium.Map(location=[folium_map_center_lat, folium_map_center_lon],zoom_s
 
 # In[12]:
 
-
+# Creating big red circle for epicentrum location for reference
 folium.Circle(
             location=(eq_lat, eq_lon),
             radius = 500,
@@ -217,6 +217,7 @@ folium.Circle(
             popup = f'Epicentrum'
         ).add_to(maps)
 
+# Creating hundreds of circles for building location and its maximum probability of damage experienced during a specified earthquake scenario
 for loc, max_prob, damage_maxprob in zip(zip(df['Lintang'], df['Bujur']), df['max_prob'], df['damage_maxprob']):
     print(loc, max_prob, damage_maxprob)
     if(damage_maxprob == 'D0'):
@@ -275,9 +276,6 @@ for loc, max_prob, damage_maxprob in zip(zip(df['Lintang'], df['Bujur']), df['ma
         ).add_to(maps)
     
 maps.save(f'{output_dirs}/{loc_name} Folium Map.html')
-
-
-# In[ ]:
 
 
 
