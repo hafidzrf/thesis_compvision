@@ -183,7 +183,7 @@ def predict_folder(folder):
 
 # In[14]:
 # 2. API Key untuk GCP dan metabase Google Street View Static API
-API_KEY = 'AIzaSyApBJBFZh3M_M8XRRj1JfrKbCrv03x4Dxk'
+API_KEY = 'YOUR_API_KEY'
 meta_base = 'https://maps.googleapis.com/maps/api/streetview/metadata?'
 base_url = 'https://maps.googleapis.com/maps/api/streetview?'
 
@@ -191,8 +191,8 @@ base_url = 'https://maps.googleapis.com/maps/api/streetview?'
 heading_list = ["0", "180", "90", "270"]
 
 # 4. Model AI untuk bangunan dan tipologi
-model_building_detector = models.load_model('Deep Learning Models/Model B-NB.h5')
-model_typology_detector = models.load_model('Deep Learning Models/Typology Classifier/Model RSL - Efficient - D1 - 14.h5')
+model_building_detector = models.load_model('MODEL_BUILDING_DETECTOR_PATH')
+model_typology_detector = models.load_model(MODEL_TYPOLOGY_DETECTOR_PATH')
 
 # 5. Dictionary tipologi bangunan yang dipertimbangkan
 typology_dict = {0 : 'Confined Masonry', 1 : 'RC Infilled Masonry',
