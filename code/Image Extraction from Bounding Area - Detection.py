@@ -10,6 +10,9 @@ import os
 from pathlib import Path
 from PIL import Image
 import shutil
+import pyproj
+
+import utility
 
 
 # ### Library Plotting dan Analisis Numerik
@@ -25,6 +28,7 @@ import requests
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
+import folium
 import branca.colormap as cm
 
 from shapely.geometry import Polygon
@@ -42,7 +46,7 @@ from tensorflow.keras import mixed_precision
 from tensorflow.keras.preprocessing import image
 
 
-# In[4]:
+# In[ ]:
 
 
 # padang_shape_path = r'Mapping/boundary/padangboundary.txt'
@@ -65,15 +69,13 @@ from tensorflow.keras.preprocessing import image
 #             padang_shape_list.append([float_lat, float_lon])
 
 
-# In[5]:
+# In[9]:
 
 
 # Pendefinisian Variabel Awal
 
 # 1. Bounding Box Area yang akan dianalisa
 
-# DEFINE POLYGON DAERAH YANG AKAN DIANALISA DISINI
-# UPAYAKAN TITIK TITIK POLYGON BERURUTAN SECARA CLOCKWISE / COUNTER CLOCKWISE UNTUK HASIL OPTIMAL
 pamulang_poly = Polygon([[-6.323284349631147, 106.70161466324525], [-6.323435986682789, 106.72861871041171], 
                    [-6.3050875808771965, 106.73105975422338], [-6.304935938452187, 106.74494319090218], 
                    [-6.339812526277561, 106.74799449566676], [-6.340419054802105, 106.75653814900755],
@@ -86,7 +88,6 @@ jakarta_poly = Polygon([[-6.095916216660592, 106.68530340448586], [-6.1020610472
                        [-6.25654313700135, 106.90364567039597], [-6.363435792037267, 106.90981062420524],
                        [-6.339608132221271, 106.84816108611255], [-6.364116566099691, 106.79473148643225],
                        [-6.226582020915292, 106.71527208177946], [-6.099228304233594, 106.68787228707161]])
-padang_poly = Polygon(padang_shape_list)
 padang_poly_rough = Polygon([[-0.8169522943332843, 100.29115393394389],[-0.8071627055897717, 100.2903794814684],
                             [-0.7906079369224775, 100.31129280041517],[-0.793221852188435, 100.3208780715991],
                             [-0.8193609131427843, 100.33590951959208],[-0.8126083385155769, 100.33743444909862],
@@ -98,164 +99,18 @@ padang_poly_rough = Polygon([[-0.8169522943332843, 100.29115393394389],[-0.80716
                             [-1.0046501413142748, 100.3642152630547],[-0.9059211921150548, 100.34175613984918], 
                             [-0.8493927980701989, 100.32200760192039],[-0.8203539150072587, 100.29064227925412], 
                             ])
-
-# 2. API Key untuk GCP dan metabase Google Street View Static API
-API_KEY = 'INSERT API KEY HERE'
-meta_base = 'https://maps.googleapis.com/maps/api/streetview/metadata?'
-base_url = 'https://maps.googleapis.com/maps/api/streetview?'
-
-# 3. Heading List GSV API (sudut POV pandang GSV yang dipertimbangkan)
-heading_list = ["0", "180", "90", "270"]
-
-# 4. Model AI untuk bangunan dan tipologi
-model_building_detector = models.load_model('Deep Learning Models/Model B-NB.h5')
-model_typology_detector = models.load_model('Deep Learning Models/Typology Classifier/Model RSL - Efficient - D1 - 14.h5')
-
-# 5. Dictionary tipologi bangunan yang dipertimbangkan
-typology_dict = {0 : 'Confined Masonry', 1 : 'RC Infilled Masonry',
-                2 : 'Timber Structure', 3 : 'Unconfined Masonry'}
-typology_acr_dict = {0 : 'CM', 1 : 'RC', 2 : 'TB', 3 : 'UC'}
-
-# 6. Variabel foto_bangunan untuk menyimpan seluruh hasil capture GSV API, koordinat, dan deteksi model
-foto_bangunan = []
+padang_city_poly_rough = Polygon([[-0.9642021332463775, 100.35129330887598],[-0.9610346110266733, 100.36681819583903],
+                                  [-0.9592920789508105, 100.37836409237548],[-0.9774826186930436, 100.38329509849804],
+                                  [-0.9768268575952576, 100.39080100999477],[-0.9573725577234504, 100.39233134146762],
+                                  [-0.9291890232625566, 100.37053202735413],[-0.9309495074604052, 100.35005169234938],
+                                  [-0.9575532632415699, 100.35281420609273],[-0.9637317017819592, 100.35157834468123]
+                                 ])
 
 # 7. Directory tempat saving gambar dan csv
-loc_name = 'INPUT (NAMA KOTA/KABUPATEN) HERE'
-output_dirs = 'INPUT (OUTPUT PATH DIRECTORY UNTUK GAMBAR/CSV) HERE'
-
-
-# ## Utility Functions
-
-# In[6]:
-
-
-# Generating Random Coordinate within a rectangular bounding box. Inputs a list of 2 coordinates
-# Outputs a random coordinate within a imaginary rectangular bounding box with a random uniform distribution
-
-def generate_random_coord_rectangle(coords):
-    lat_rand = np.random.uniform(coords[0], coords[1], size=None)
-    lon_rand = np.random.uniform(coords[2], coords[3], size=None)
-    file_name = str(np.round(lat_rand,7)) + ' - ' + str(np.round(lon_rand,7))
-    #cache = np.array((lat_rand,lon_rand))
-    return lat_rand,lon_rand, str(lat_rand) + ',' + str(lon_rand), file_name
-
-
-# In[7]:
-
-
-# Generating Random Coordinate within a polygon bounding box. Inputs a list of n coordinates
-# Outputs N random coordinate within a polygon bounding box with a random uniform distribution
-
-def random_points_in_polygon(polygon, number):
-    points = []
-    minx, miny, maxx, maxy = polygon.bounds
-    while len(points) < number:
-        pnt = Point(np.random.uniform(minx, maxx), np.random.uniform(miny, maxy))
-        if polygon.contains(pnt):
-            points.append(pnt)
-    latlon = [[x.x, x.y] for x in points]
-    return latlon
-
-
-# In[8]:
-
-
-def preprocess_image(path, target_size = (256,256)):
-    img = image.load_img(path, target_size = target_size)
-    img_array = image.img_to_array(img)
-    img_batch = np.expand_dims(img_array, axis=0)
-    img_preprocessed = img_batch
-    return img_preprocessed
-
-
-# In[9]:
-
-
-def predict_buildings(path, model):
-    img_preprocessed = preprocess_image(path, target_size = (256,256))
-    prediction = np.squeeze(model.predict(img_preprocessed))
-    return prediction
-
-
-# In[10]:
-
-
-def predict_typologies(path, model):
-    img_preprocessed = preprocess_image(path,target_size = (256,256))
-    prediction = np.squeeze(model.predict(img_preprocessed))
-    prediction = typology_dict[np.argmax(prediction)]
-    print(prediction)
-    return prediction
-
-
-# In[11]:
-
-
-def GSV_query(meta_base, base_url, API_KEY, location_coord, heading, radius = 50, size = "256x256"):
-    meta_params = {'key': API_KEY,
-                   'location': location_coord}
-
-    pic_params = {'key': API_KEY,
-                  'location': location_coord,
-                  'heading' : heading,
-                  'radius' : radius,
-                  'size': size}
-
-    meta_response = requests.get(meta_base, params=meta_params)
-    response = requests.get(base_url,params = pic_params)
-    return meta_response, response
-
-
-# ## Loading ML Models to Detect Buildings and its Typologies
-
-# In[12]:
-
-
-def predict_folder(folder):
-    for image_path in os.listdir(folder):
-        path = folder + image_path
-        print(path)
-        predict_typology = predict_typologies(path, model_typology_detector)
-        foto_bangunan.append([image_path, predict_typology])
-
-
-# In[13]:
-
-
-def sv_mining(poly, loc_name, num_query, min_threshold = 0.60,  dirs = None,
-             radius = 50, size = "256x256"):
-    not_found = 0
-    dapat = 0
-    heading_list = ["0", "180", "90", "270"]
-    if not os.path.exists(dirs):
-        os.makedirs(dirs)
-        print("Directory created successfully!")
-    coords = random_points_in_polygon(poly, num_query)
-    for cnt, (lat, lon) in enumerate(coords):
-        file_name = str(np.round(lat,7)) + ' - ' + str(np.round(lon,7))
-        location_coord = str(lat) + ',' + str(lon)
-        heading = random.choice(heading_list)
-        meta_response, response = GSV_query(meta_base, base_url,
-                                            API_KEY, location_coord, heading, radius, size)
-        if(meta_response.json().get("status") == 'OK'):
-            img_path = dirs + str(cnt) + ' ' + loc_name + ' ' + file_name + '_' + heading + '.jpg'
-            if(response.ok == True):
-                if((cnt+1) % 50 == 0):
-                    print('Pencarian gambar ke - ' + str(cnt+1))
-                with open(img_path, 'wb') as file:
-                    file.write(response.content)
-                response.close()
-                prediction = predict_buildings(img_path, model_building_detector)
-                if prediction < min_threshold:
-                    os.remove(img_path)
-                else:
-                    predict_typology = predict_typologies(img_path, model_typology_detector)
-                    foto_bangunan.append([cnt, img_path, lat, lon, heading, predict_typology])
-                    dapat+= 1
-        else:
-            not_found+= 1
-    print("Total gambar tidak mampu di-query : "+ str(not_found) + " gambar")
-    return foto_bangunan
+loc_name = 'Padang_Kota'
+output_dirs = 'Mapping/Skenario Padang A/'
+folium_map_center_lat = -0.907807699324931
+folium_map_center_lon = 100.37461998026899
 
 
 # ### Eksekusi GSV API Mining
@@ -263,7 +118,7 @@ def sv_mining(poly, loc_name, num_query, min_threshold = 0.60,  dirs = None,
 # In[ ]:
 
 
-foto_bangunan = sv_mining(padang_poly, loc_name , num_query = 500, min_threshold = 0.65, 
+foto_bangunan = utility.sv_mining(padang_city_poly_rough, loc_name , num_query = 1200, min_threshold = 0.65, 
           dirs = output_dirs,radius = 50, size = "256x256")
 
 
@@ -273,5 +128,157 @@ foto_bangunan = sv_mining(padang_poly, loc_name , num_query = 500, min_threshold
 # Extracting data dari list foto_bangunan menjadi csv yang siap digunakan pada database
 
 df = pd.DataFrame(foto_bangunan, columns = ['Index', 'Path', 'Lintang', 'Bujur', 'Heading', 'Tipologi'])
-df.to_csv(f'{output_dirs}/{loc_name}.csv', index = False)
+df.to_csv(f'{output_dirs}/{loc_name} 060724.csv', index = False)
+
+
+# ### Calculate distances between epicentrum and each Building Node
+# ### Then, calculating hypocentrum with pythagoras formula
+# #### First, we define the earthquake scenarios
+
+# In[10]:
+
+
+# Earthquake Scenario (Padang 2009 EQ)
+eq_depth = 90 # in km
+eq_mw = 8.1 # magnitude from EQ history in Sumatra subduction zone
+eq_lat, eq_lon = -0.7071, 99.9678
+
+
+# In[ ]:
+
+
+df = pd.read_csv(f'{output_dirs}/{loc_name} 050724.csv')
+
+
+# In[ ]:
+
+
+# Initiate new empty columns for filling
+df["Epicentrum Dist (km)"], df["Hypocentrum Dist (km)"], df["PGA Bedrock (g)"], df["Surface PGA (gal)"], df["MMI"] = 0.0, 0.0, 0.0, 0.0, 0
+df["Vulnerability_Class"], df["Vulnerability_MMI"] = "",""
+df["D0"], df["D1"], df["D2"], df["D3"], df["D4"], df["D5"] = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+df["total"], df["max_prob"], df["damage_maxprob"] = 0.0, 0.0, 0.0
+
+
+# In[ ]:
+
+
+for i, (building_lat, building_lon, building_typology) in enumerate(zip(df['Lintang'],df['Bujur'],df['Tipologi'])):
+    az, dist = utility.calc_azimuth_distance(eq_lat, eq_lon, building_lat, building_lon)
+    dist_km = dist/1000
+    hypocentrum = (dist_km**2 + eq_depth**2)**0.5
+    pga = utility.calc_PGA_Young(eq_mw, eq_depth, dist_km, hypocentrum)
+    surface_pga = utility.calc_PGA_surface(pga)
+    mmi = np.round(utility.calc_MMI(surface_pga))
+    
+    # Filling the content of the main analysis table
+    df.loc[i, "Epicentrum Dist (km)"], df.loc[i, "Hypocentrum Dist (km)"] = dist_km, hypocentrum
+    df.loc[i, "PGA Bedrock (g)"], df.loc[i, "Surface PGA (gal)"], df.loc[i, "MMI"] = pga, surface_pga, mmi
+    df.loc[i, "Vulnerability_Class"] = utility.randomize_building_vulnerability_class(building_typology)
+    df.loc[i, "Vulnerability_MMI"] = df.loc[i, "Vulnerability_Class"] + str(df.loc[i, "MMI"])
+    df.loc[i, "D0"], df.loc[i, "D1"], df.loc[i, "D2"], df.loc[i, "D3"], df.loc[i, "D4"], df.loc[i, "D5"] = utility.calculate_dmg_prob(df.loc[i, "Vulnerability_MMI"])
+    df.loc[i, "total"] = df.loc[i, "D0"] + df.loc[i, "D1"] + df.loc[i, "D2"] + df.loc[i, "D3"] + df.loc[i, "D4"] + df.loc[i, "D5"]
+    df.loc[i, "max_prob"] = df.loc[i, ["D0", "D1", "D2", "D3", "D4", "D5"]].max()
+    df.loc[i, "damage_maxprob"] = str(df.loc[i, ["D5", "D4", "D3", "D2", "D1", "D0"]].idxmax())
+
+
+# In[ ]:
+
+
+df.head()
+
+
+# In[ ]:
+
+
+df.to_excel(f'{output_dirs}/{loc_name} 050724 - Analyzed.xlsx', index = False)
+
+
+# ### Mapping with Folium
+
+# In[11]:
+
+
+df = pd.read_excel(f'{output_dirs}/{loc_name} 050724 - Analyzed.xlsx')
+
+colormap_D1D5 = cm.LinearColormap(colors=['green','yellow','orange','red'], index=[0, 0.166, 0.33, 0.5],vmin=0,vmax=0.5)
+maps = folium.Map(location=[folium_map_center_lat, folium_map_center_lon],zoom_start=11, tiles = 'OpenStreetMap')
+
+
+# In[12]:
+
+
+folium.Circle(
+            location=(eq_lat, eq_lon),
+            radius = 500,
+            fill=True,
+            color='red',
+            fill_opacity=0.4,
+            popup = f'Epicentrum'
+        ).add_to(maps)
+
+for loc, max_prob, damage_maxprob in zip(zip(df['Lintang'], df['Bujur']), df['max_prob'], df['damage_maxprob']):
+    print(loc, max_prob, damage_maxprob)
+    if(damage_maxprob == 'D0'):
+        folium.Circle(
+            location=loc,
+            radius = 120*max_prob,
+            fill=True,
+            color='white',
+            fill_opacity=0.7,
+            popup = f'{damage_maxprob}, {max_prob*100}% probability'
+        ).add_to(maps)
+    elif(damage_maxprob == 'D1'):
+        folium.Circle(
+            location=loc,
+            radius = 120*max_prob,
+            fill=True,
+            color='darkgreen',
+            fill_opacity=0.7,
+            popup = f'{damage_maxprob}, {max_prob*100}% probability'
+        ).add_to(maps)
+    elif(damage_maxprob == 'D2'):
+        folium.Circle(
+            location=loc,
+            radius = 120*max_prob,
+            fill=True,
+            color='green',
+            fill_opacity=0.7,
+            popup = f'{damage_maxprob}, {max_prob*100}% probability'
+        ).add_to(maps)
+    elif(damage_maxprob == 'D3'):
+        folium.Circle(
+            location=loc,
+            radius = 120*max_prob,
+            fill=True,
+            color='yellow',
+            fill_opacity=0.7,
+            popup = f'{damage_maxprob}, {max_prob*100}% probability'
+        ).add_to(maps)
+    elif(damage_maxprob == 'D4'):
+        folium.Circle(
+            location=loc,
+            radius = 120*max_prob,
+            fill=True,
+            color='orange',
+            fill_opacity=0.7,
+            popup = f'{damage_maxprob}, {max_prob*100}% probability'
+        ).add_to(maps)
+    elif(damage_maxprob == 'D5'):
+        folium.Circle(
+            location=loc,
+            radius = 120*max_prob,
+            fill=True,
+            color='red',
+            fill_opacity=0.7,
+            popup = f'{damage_maxprob}, {max_prob*100}% probability'
+        ).add_to(maps)
+    
+maps.save(f'{output_dirs}/{loc_name} Folium Map.html')
+
+
+# In[ ]:
+
+
+
 
