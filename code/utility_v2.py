@@ -279,7 +279,7 @@ def predict_folder(folder):
 
 
 # 2. API Key untuk GCP dan metabase Google Street View Static API
-API_KEY = 'AIzaSyApBJBFZh3M_M8XRRj1JfrKbCrv03x4Dxk'
+API_KEY = 'enter your own API KEY here'
 meta_base = 'https://maps.googleapis.com/maps/api/streetview/metadata?'
 base_url = 'https://maps.googleapis.com/maps/api/streetview?'
 
