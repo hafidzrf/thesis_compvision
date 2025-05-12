@@ -3,7 +3,7 @@
 
 # ### Library Pemetaan dan Operating System
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -11,13 +11,14 @@ from pathlib import Path
 from PIL import Image
 import shutil
 import pyproj
+from ultralytics import YOLO
 
-import utility
+import utility_v2
 
 
 # ### Library Plotting dan Analisis Numerik
 
-# In[2]:
+# In[ ]:
 
 
 import pandas as pd
@@ -33,17 +34,6 @@ import branca.colormap as cm
 
 from shapely.geometry import Polygon
 from shapely.geometry import Point
-
-
-# ### Library Machine Learning & Deep Learning
-
-# In[3]:
-
-
-from keras import backend as K
-from tensorflow.keras import models
-from tensorflow.keras import mixed_precision
-from tensorflow.keras.preprocessing import image
 
 
 # In[ ]:
@@ -69,7 +59,7 @@ from tensorflow.keras.preprocessing import image
 #             padang_shape_list.append([float_lat, float_lon])
 
 
-# In[9]:
+# In[ ]:
 
 
 # Pendefinisian Variabel Awal
@@ -105,12 +95,15 @@ padang_city_poly_rough = Polygon([[-0.9642021332463775, 100.35129330887598],[-0.
                                   [-0.9291890232625566, 100.37053202735413],[-0.9309495074604052, 100.35005169234938],
                                   [-0.9575532632415699, 100.35281420609273],[-0.9637317017819592, 100.35157834468123]
                                  ])
+scbd_1_poly = Polygon([[-6.188488790427083, 106.79748315518809],[-6.18841686338198, 106.81155496598606],
+                        [-6.2124399515294275, 106.81936861938284],[-6.217906130057853, 106.81227845238885],
+                        [-6.200536432346643, 106.79806194430626],[-6.189101673193307, 106.79668305284079]])
 
-# 7. Directory tempat saving gambar dan csv
-loc_name = 'PREFIX_NAMA GAMBAR HASIL GSV MINING'
-output_dirs = 'OUTPUT DIRECTORY'
-folium_map_center_lat = -0.907807699324931 # Default posisi di tengah Kota Padang
-folium_map_center_lon = 100.37461998026899 # Default posisi di tengah Kota Padang
+# 2. Directory tempat saving gambar dan csv
+loc_name = 'Pamulang'
+output_dirs = r"C:\Users\hafid\Python Files\TA & Thesis\Thesis\Main Work\Mapping\Pamulang 1/"
+folium_map_center_lat = -6.350165563406041 
+folium_map_center_lon = 106.74312574746396
 
 
 # ### Eksekusi GSV API Mining
@@ -118,36 +111,40 @@ folium_map_center_lon = 100.37461998026899 # Default posisi di tengah Kota Padan
 # In[ ]:
 
 
-foto_bangunan = utility.sv_mining(padang_city_poly_rough, loc_name , num_query = 1200, min_threshold = 0.65, 
-          dirs = output_dirs,radius = 50, size = "256x256")
+foto_bangunan = utility_v2.sv_mining(pamulang_poly, loc_name , num_query = 100, 
+          dirs = output_dirs, radius = 50, size = "640x640")
 
 
 # In[ ]:
 
 
 # Extracting data dari list foto_bangunan menjadi csv yang siap digunakan pada database
-
-df = pd.DataFrame(foto_bangunan, columns = ['Index', 'Path', 'Lintang', 'Bujur', 'Heading', 'Tipologi'])
-df.to_csv(f'{output_dirs}/{loc_name} 060724.csv', index = False)
+df = pd.DataFrame(foto_bangunan, columns = ['Index', 'Path', 'Lintang', 'Bujur', 'Tipologi'])
+df.to_csv(f'{output_dirs}/{loc_name} 120525.csv', index = False)
 
 
 # ### Calculate distances between epicentrum and each Building Node
 # ### Then, calculating hypocentrum with pythagoras formula
 # #### First, we define the earthquake scenarios
 
-# In[10]:
+# In[ ]:
 
 
 # Earthquake Scenario (Padang 2009 EQ)
-eq_depth = 90 # in km. DEFAULT GEMPA PADANG 30 SEPTEMBER 2009
-eq_mw = 8.1 # magnitude from EQ history in Sumatra subduction zone
-eq_lat, eq_lon = -0.7071, 99.9678 # DEFAULT KOORDINAT EPISENTRUM GEMPA PADANG 30 SEPTEMBER 2009
+# The list contains ([Scenario_Name, EQ_depth, EQ_MW, EQ_lat, EQ_lon, EQ_type])
+eq_scenario = []
+
+eq_scenario.append(['Padang_2009', 90, 8.1, -0.7071, 99.9678, 'Subduction'])
+eq_scenario.append(['PadangPanjang_1926', 35, 6.8, -1.5, 99.5, 'Subduction'])
+eq_scenario.append(['PesisirSelatan_2004', 51, 6, -1.5802, 100.4126, 'Subduction'])
+eq_scenario.append(['Padang_2010', 20, 7.8, -3.491, 100.082, 'Subduction'])
+eq_scenario.append(['RedjangLebong_1909', 35, 7.6, -2, 101, 'SumatraFaultZone'])
 
 
 # In[ ]:
 
 
-df = pd.read_csv(f'{output_dirs}/{loc_name} 050724.csv')
+df = pd.read_csv(f'{output_dirs}/{loc_name} 210724.csv')
 
 
 # In[ ]:
@@ -167,16 +164,16 @@ for i, (building_lat, building_lon, building_typology) in enumerate(zip(df['Lint
     az, dist = utility.calc_azimuth_distance(eq_lat, eq_lon, building_lat, building_lon)
     dist_km = dist/1000
     hypocentrum = (dist_km**2 + eq_depth**2)**0.5
-    pga = utility.calc_PGA_Young(eq_mw, eq_depth, dist_km, hypocentrum)
-    surface_pga = utility.calc_PGA_surface(pga)
-    mmi = np.round(utility.calc_MMI(surface_pga))
+    pga = utility_v2.calc_PGA_Young(eq_mw, eq_depth, dist_km, hypocentrum)
+    surface_pga = utility_v2.calc_PGA_surface(pga)
+    mmi = np.round(utility_v2.calc_MMI(surface_pga))
     
     # Filling the content of the main analysis table
     df.loc[i, "Epicentrum Dist (km)"], df.loc[i, "Hypocentrum Dist (km)"] = dist_km, hypocentrum
     df.loc[i, "PGA Bedrock (g)"], df.loc[i, "Surface PGA (gal)"], df.loc[i, "MMI"] = pga, surface_pga, mmi
-    df.loc[i, "Vulnerability_Class"] = utility.randomize_building_vulnerability_class(building_typology)
+    df.loc[i, "Vulnerability_Class"] = utility_v2.randomize_building_vulnerability_class(building_typology)
     df.loc[i, "Vulnerability_MMI"] = df.loc[i, "Vulnerability_Class"] + str(df.loc[i, "MMI"])
-    df.loc[i, "D0"], df.loc[i, "D1"], df.loc[i, "D2"], df.loc[i, "D3"], df.loc[i, "D4"], df.loc[i, "D5"] = utility.calculate_dmg_prob(df.loc[i, "Vulnerability_MMI"])
+    df.loc[i, "D0"], df.loc[i, "D1"], df.loc[i, "D2"], df.loc[i, "D3"], df.loc[i, "D4"], df.loc[i, "D5"] = utility_v2.calculate_dmg_prob(df.loc[i, "Vulnerability_MMI"])
     df.loc[i, "total"] = df.loc[i, "D0"] + df.loc[i, "D1"] + df.loc[i, "D2"] + df.loc[i, "D3"] + df.loc[i, "D4"] + df.loc[i, "D5"]
     df.loc[i, "max_prob"] = df.loc[i, ["D0", "D1", "D2", "D3", "D4", "D5"]].max()
     df.loc[i, "damage_maxprob"] = str(df.loc[i, ["D5", "D4", "D3", "D2", "D1", "D0"]].idxmax())
@@ -191,23 +188,23 @@ df.head()
 # In[ ]:
 
 
-df.to_excel(f'{output_dirs}/{loc_name} 050724 - Analyzed.xlsx', index = False)
+df.to_excel(f'{output_dirs}/{loc_name} 210724 - Analyzed.xlsx', index = False)
 
 
 # ### Mapping with Folium
 
-# In[11]:
+# In[ ]:
 
 
-df = pd.read_excel(f'{output_dirs}/{loc_name} 050724 - Analyzed.xlsx')
+df = pd.read_excel(f'{output_dirs}/{loc_name} 210724 - Analyzed.xlsx')
 
 colormap_D1D5 = cm.LinearColormap(colors=['green','yellow','orange','red'], index=[0, 0.166, 0.33, 0.5],vmin=0,vmax=0.5)
 maps = folium.Map(location=[folium_map_center_lat, folium_map_center_lon],zoom_start=11, tiles = 'OpenStreetMap')
 
 
-# In[12]:
+# In[ ]:
 
-# Creating big red circle for epicentrum location for reference
+
 folium.Circle(
             location=(eq_lat, eq_lon),
             radius = 500,
@@ -217,7 +214,6 @@ folium.Circle(
             popup = f'Epicentrum'
         ).add_to(maps)
 
-# Creating hundreds of circles for building location and its maximum probability of damage experienced during a specified earthquake scenario
 for loc, max_prob, damage_maxprob in zip(zip(df['Lintang'], df['Bujur']), df['max_prob'], df['damage_maxprob']):
     print(loc, max_prob, damage_maxprob)
     if(damage_maxprob == 'D0'):
@@ -276,6 +272,9 @@ for loc, max_prob, damage_maxprob in zip(zip(df['Lintang'], df['Bujur']), df['ma
         ).add_to(maps)
     
 maps.save(f'{output_dirs}/{loc_name} Folium Map.html')
+
+
+# In[ ]:
 
 
 
